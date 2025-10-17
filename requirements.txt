@@ -1,0 +1,33 @@
+# Core utilities
+pandas>=2.0
+numpy>=1.24
+tqdm>=4.66
+
+# Web scraping
+requests>=2.31
+beautifulsoup4>=4.12
+lxml>=4.9
+
+# Natural language processing (Spanish)
+nltk>=3.8
+gensim>=4.3
+
+# Machine learning / topic modeling
+scikit-learn>=1.4
+
+# Visualization
+altair>=5.3
+vega-datasets>=0.9
+plotly>=5.22
+
+# Data storage / I/O
+pyarrow>=15.0
+openpyxl>=3.1
+
+# Optional — dashboard or web interface
+streamlit>=1.38
+
+# Development & reproducibility
+jupyterlab>=4.2
+notebook>=7.1
+black>=24.3
