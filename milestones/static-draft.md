@@ -44,7 +44,7 @@ This visualization highlights the top speakers during the mañaneras based on bo
 
 ### 5. Turn-taking structure of conferences by time. 
 This visualization examines the turn-taking structure of the mañaneras, focusing on how speaking time is shared between the President and journalists.
-![Heatmap of conference length](/figures/static_visualizations/05_turn_taking_ratio.pngg)
+![Heatmap of conference length](/figures/static_visualizations/05_turn_taking_ratio.png)
 
 ### 6. Turn-taking structure of conferences by time. 
 This visualization explores the turn-taking structure of the mañaneras by analyzing the percentage of total speaking turns taken by the President, journalists, and other participants over time.
