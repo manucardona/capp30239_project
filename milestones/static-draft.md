@@ -28,6 +28,8 @@ Current status:
 ### 1. Length of Claudia Sheinbaum’s Conferences
 This visualization explores how the length of the mañaneras varies by weekday and week. By measuring the number of words spoken each day, it reveals patterns in the president’s communication rhythm.
 
+![Heatmap of conference length]()
+
 ### 2. Conference length by weekday
 The goal of this visualization is to analyze the lenght of the conferences by week and weekday. This visualization allows to distinguish by days with multiple conferences.
 
