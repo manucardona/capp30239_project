@@ -28,31 +28,42 @@ Current status:
 ### 1. Length of Claudia Sheinbaum’s Conferences
 This visualization explores how the length of the mañaneras varies by weekday and week. By measuring the number of words spoken each day, it reveals patterns in the president’s communication rhythm.
 
-![Heatmap of conference length]()
+![Heatmap of conference length](/figures/static_visualizations/01_heatmap_daily_lengths.png)
 
 ### 2. Conference length by weekday
 The goal of this visualization is to analyze the lenght of the conferences by week and weekday. This visualization allows to distinguish by days with multiple conferences.
+![Heatmap of conference length](/figures/static_visualizations/02_heatmap_daily_lengths_fixed_width.png)
 
 ### 3. Top speakers at the conferences
 This visualization identifies the top speakers during the mañaneras based on the number of interventions. It highlights how participation is distributed among different actors, offering insight into the dynamics of who speaks most often during the daily conferences.
+![Heatmap of conference length](/figures/static_visualizations/03_top_speakers.png)
 
 ### 4. Top speakers at the conferences by number of words
 This visualization highlights the top speakers during the mañaneras based on both the frequency and length of their interventions. By combining how often each actor speaks with how much they speak, it reveals differences in participation dynamics. Showing not only who takes the floor most frequently, but also who dominates the discussion in terms of total words spoken.
+![Heatmap of conference length](/figures/static_visualizations/04_top_speakers_by_words.png)
 
 ### 5. Turn-taking structure of conferences by time. 
 This visualization examines the turn-taking structure of the mañaneras, focusing on how speaking time is shared between the President and journalists.
+![Heatmap of conference length](/figures/static_visualizations/05_turn_taking_ratio.pngg)
 
 ### 6. Turn-taking structure of conferences by time. 
 This visualization explores the turn-taking structure of the mañaneras by analyzing the percentage of total speaking turns taken by the President, journalists, and other participants over time.
+![Heatmap of conference length](/figures/static_visualizations/06_01_turns_share_daily.png)
+![Heatmap of conference length](/figures/static_visualizations/06_02_turns_share_weekly.png)
 
 ### 7. Average length by weekday
 This visualization analyzes the average length of the mañaneras by weekday to identify patterns in their duration. It helps reveal whether certain days of the week consistently feature longer or shorter conferences.
+![Heatmap of conference length](/figures/static_visualizations/07_avg_length_by_weekday.png)
 
 ### 8. Topic occurence by week
 This visualization tracks the weekly occurrence of key topics in the mañaneras to show how the president’s focus shifts over time. By grouping mentions of themes such as education, migration, or security by week, it highlights changing priorities and the evolving narrative of government discourse.
+![Heatmap of conference length](/figures/static_visualizations/08_weekly_topic_trends.png)
 
 ### 9. What states in Mexico are mentioned the most?
 This visualization examines which Mexican states are mentioned most frequently during the mañaneras. By counting references to each state across all conferences, it reveals the geographic focus of the president’s discourse.
+![Heatmap of conference length](/figures/static_visualizations/09_01_most_mentioned_states.png)
+![Heatmap of conference length](/figures/static_visualizations/09_02_most_mentioned_states_noEDOMEX.png)
+![Heatmap of conference length](/figures/static_visualizations/10_state_mentions_map.png)
 
 ## What form do you envision your final narrative taking? (e.g. An article incorporating the images? A poster? An infographic?)
 
