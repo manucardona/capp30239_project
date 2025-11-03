@@ -9,6 +9,21 @@ import string
 import nltk
 from nltk.corpus import stopwords
 
+from typing import Optional
+
+# Load analyzer once (Spanish sentiment)
+try:
+    from pysentimiento import create_analyzer
+    _analyzer_es = create_analyzer(task="sentiment", lang="es")
+except Exception as e:
+    _analyzer_es = None
+    print("Could not load pysentimiento analyzer. "
+          "Install/verify `pysentimiento`, `transformers`, and `torch`.\n", e)
+
+# Small helpers 
+_LABEL_TO_SCORE = {"POS": 1.0, "NEU": 0.0, "NEG": -1.0}
+_SPANISH_LABEL = {"POS": "Positive", "NEU": "Neutral", "NEG": "Negative"}
+
 # Download Spanish stopwords (only once)
 nltk.download('stopwords')
 
@@ -179,6 +194,77 @@ def get_daily_lengths(df):
     daily_split = daily_split.rename(columns={"length_words": "words"})
 
     return daily_split
+
+def get_daily_lengths_by_actor(df):
+    """
+    Compute daily total words spoken by each actor (e.g., Presidenta vs. Periodistas),
+    plus visualization attributes for heatmaps.
+
+    Args:
+        df (pd.DataFrame): Must contain at least ['date', 'speaker_clean', 'text']
+
+    Returns:
+        pd.DataFrame with columns:
+            - date
+            - speaker_group (actor type)
+            - week, year, yearweek
+            - day_of_week, day_idx
+            - total words per day and actor
+            - conf_rank, n_conf (for same-day split)
+            - x0, x1 (for horizontal slice plotting)
+    """
+
+    # Prepare data
+    df = df.copy()
+    df["date"] = pd.to_datetime(df["date"], errors="coerce")
+
+    # Define speaker grouping
+    df["speaker_clean"] = df["speaker"].apply(clean_speaker)
+    df["speaker_group"] = df["speaker_clean"].apply(
+    lambda s: "Journalist" if s == "PERIODISTA/PREGUNTA" else "President/Official"
+    )
+
+    # Compute total words per date and actor
+    df["words"] = df["text"].fillna("").str.split().str.len()
+    daily_actor = (
+        df.groupby(["date", "speaker_group"], as_index=False)["words"]
+        .sum()
+        .rename(columns={"words": "total_words"})
+    )
+
+    # Week and year info
+    daily_actor["week"] = daily_actor["date"].dt.isocalendar().week
+    daily_actor["year"] = daily_actor["date"].dt.isocalendar().year
+    daily_actor["yearweek"] = (
+        daily_actor["year"].astype(str) + "-" + daily_actor["week"].astype(str).str.zfill(2)
+    )
+
+    # Weekday and index for plotting
+    # Asked ChatGPT to do this:
+    day_order = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    day_to_idx = {d: i for i, d in enumerate(day_order)}
+    daily_actor["day_of_week"] = daily_actor["date"].dt.day_name()
+    daily_actor["day_idx"] = daily_actor["day_of_week"].map(day_to_idx)
+
+    daily_actor["month"] = daily_actor["date"].dt.strftime("%B")
+    daily_actor["month"] = pd.Categorical(
+        daily_actor["month"],
+        categories=[
+            "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"
+        ],
+        ordered=True
+    )
+
+    # Handle multiple conferences per day
+    daily_actor["conf_rank"] = daily_actor.groupby(["date", "speaker_group"]).cumcount() + 1
+    daily_actor["n_conf"] = daily_actor.groupby(["date", "speaker_group"])["total_words"].transform("count")
+
+    # Compute slice bounds (same logic as before)
+    daily_actor["x0"] = daily_actor["day_idx"] + (daily_actor["conf_rank"] - 1) / daily_actor["n_conf"]
+    daily_actor["x1"] = daily_actor["day_idx"] + daily_actor["conf_rank"] / daily_actor["n_conf"]
+
+    return daily_actor
 
 def clean_speaker(s):
     """
@@ -364,6 +450,71 @@ def get_turn_taking_stats(df):
 
     return  turn_stats.dropna(subset=['ratio_president_journalist'])
 
+def get_turn_taking_stats_interact(df):
+    """
+    Compute turn-taking structure metrics for each conference,
+    considering ONLY the conversation after the first journalist speaks.
+
+    Args:
+        df (pd.DataFrame): Must contain 'date' and 'speaker' columns.   
+
+    Returns:
+        pd.DataFrame with:
+        - date
+        - total_turns (after first journalist)
+        - president_turns
+        - journalist_turns
+        - ratio_president_journalist
+    """
+    df = df.copy()
+    # Clean speaker names
+    df["speaker_clean"] = df["speaker"].apply(clean_speaker)
+
+    # Ensure necessary columns exist
+    assert "date" in df.columns and "speaker_clean" in df.columns, \
+        "DataFrame must contain 'date' and 'speaker_clean' columns."
+
+    filtered = []
+
+    # Loop through each conference and trim before first journalist
+    for date, group in df.groupby("date"):
+        group = group.reset_index(drop=True)
+        # Find the first journalist index
+        first_journalist_idx = group.index[group["speaker_clean"] == "PERIODISTA/PREGUNTA"]
+
+        if len(first_journalist_idx) == 0:
+            # Skip if no journalist spoke
+            continue
+
+        # Keep only rows after the first journalist intervention
+        trimmed = group.loc[first_journalist_idx[0]:].copy()
+        trimmed["date"] = date
+        filtered.append(trimmed)
+
+    if not filtered:
+        return pd.DataFrame(columns=["date", "total_turns", "president_turns",
+                                     "journalist_turns", "ratio_president_journalist"])
+
+    df_filtered = pd.concat(filtered, ignore_index=True)
+
+    # Compute stats
+    turn_stats = (
+        df_filtered.groupby("date")
+        .agg(
+            total_turns=("speaker_clean", "count"),
+            president_turns=("speaker_clean", lambda x: (x == "CLAUDIA SHEINBAUM PARDO").sum()),
+            journalist_turns=("speaker_clean", lambda x: (x == "PERIODISTA/PREGUNTA").sum())
+        )
+        .reset_index()
+    )
+
+    # Compute ratio
+    turn_stats["ratio_president_journalist"] = (
+        turn_stats["president_turns"] / turn_stats["journalist_turns"].replace(0, pd.NA)
+    )
+
+    return turn_stats.dropna(subset=['ratio_president_journalist'])
+
 def get_avg_length_by_weekday(df):
     """
     Compute the average duration of mañaneras (in total words)
@@ -531,6 +682,84 @@ def get_topics_by_week(df, topics: dict):
 
     return topic_long_weekly
 
+def get_topics_by_week_by_group(df, topics: dict):
+    """
+    Analyze weekly topic mentions separately for each speaker group (President/Officials vs Journalists).
+
+    Args:
+        df (pd.DataFrame): Must contain 'date', 'text', and 'speaker_group' columns.
+        topics (dict): Mapping of topic names to lists of keywords.
+
+    Returns:
+        pd.DataFrame: Tidy DataFrame with weekly topic shares and smoothed values by group.
+    """
+
+    # Clean text
+    df = df.copy()
+    df["clean_text"] = df["text"].apply(clean_text)
+
+    def count_topic_mentions(text, topic_words):
+        """Count occurrences of any topic words in the given text."""
+        return sum(text.count(w) for w in topic_words)
+
+    # Count mentions per topic
+    for topic, words in topics.items():
+        df[f"{topic}_count"] = df["clean_text"].apply(lambda t: count_topic_mentions(t, words))
+
+    # Word count per intervention
+    df["n_words"] = df["clean_text"].str.split().apply(len)
+
+    # Define speaker grouping
+    df["speaker_clean"] = df["speaker"].apply(clean_speaker)
+    df["speaker_group"] = df["speaker_clean"].apply(
+    lambda s: "Journalist" if s == "PERIODISTA/PREGUNTA" else "President/Official"
+    )
+
+    # Aggregate daily totals by speaker group
+    daily_topics = (
+        df.groupby(["date", "speaker_group"], as_index=False)
+        .agg({f"{t}_count": "sum" for t in topics} | {"n_words": "sum"})
+    )
+
+    # Compute topic shares
+    for topic in topics:
+        daily_topics[f"{topic}_share"] = daily_topics[f"{topic}_count"] / daily_topics["n_words"].replace(0, pd.NA)
+
+    # Convert date to datetime
+    daily_topics["date"] = pd.to_datetime(daily_topics["date"], errors="coerce")
+    daily_topics["year"] = daily_topics["date"].dt.isocalendar().year
+    daily_topics["week"] = daily_topics["date"].dt.isocalendar().week
+
+    # Weekly averages
+    weekly_topics = (
+        daily_topics.groupby(["year", "week", "speaker_group"], as_index=False)
+        .agg({col: "mean" for col in daily_topics.columns if col.endswith("_share")})
+    )
+
+    # Create yearweek label for plotting
+    weekly_topics["yearweek"] = (
+        weekly_topics["year"].astype(str)
+        + "-W"
+        + weekly_topics["week"].astype(str).str.zfill(2)
+    )
+
+    # Reshape to long format
+    topic_long_weekly = weekly_topics.melt(
+        id_vars=["yearweek", "speaker_group"],
+        value_vars=[col for col in weekly_topics.columns if col.endswith("_share")],
+        var_name="topic",
+        value_name="share"
+    )
+    topic_long_weekly["topic"] = topic_long_weekly["topic"].str.replace("_share", "")
+
+    # Rolling smoothing (per topic and group)
+    topic_long_weekly["share_smooth"] = (
+        topic_long_weekly.groupby(["topic", "speaker_group"])["share"]
+        .transform(lambda x: x.rolling(3, min_periods=1).mean())
+    )
+
+    return topic_long_weekly
+
 def count_state_mentions(df, text_col="text"):
     """
     Count the number of times each Mexican state is mentioned in the given text column.
@@ -559,6 +788,53 @@ def count_state_mentions(df, text_col="text"):
     df_states = pd.DataFrame(results).sort_values("mentions", ascending=False).reset_index(drop=True)
     return df_states
 
+def count_state_mentions_by_group(df, text_col="text"):
+    """
+    Count the number of times each Mexican state is mentioned,
+    separated by speaker group (e.g., President/Official vs Journalists).
+
+    Args:
+        df (pd.DataFrame): Must contain a text column and a speaker group column.
+        text_col (str): Name of the column containing text data.
+
+    Returns:
+        pd.DataFrame: Tidy DataFrame with columns ['state', 'speaker_group', 'mentions'].
+    """
+    results = []
+
+    # Ensure columns exist
+    assert text_col in df.columns, f"Missing text column: {text_col}"
+
+    # Define speaker grouping
+    df["speaker_clean"] = df["speaker"].apply(clean_speaker)
+    df["speaker_group"] = df["speaker_clean"].apply(
+    lambda s: "Journalist" if s == "PERIODISTA/PREGUNTA" else "President/Official"
+    )
+
+    # Loop through each group (President/Official vs Journalist)
+    for group, subset in df.groupby("speaker_group"):
+        # Combine and clean all text for that group
+        full_text = " ".join(subset[text_col].dropna().astype(str))
+        full_text = clean_text(full_text)
+
+        for state in MEXICO_STATES:
+            state_norm = clean_text(state)
+            pattern = r"\b" + re.escape(state_norm) + r"\b"
+            count = len(re.findall(pattern, full_text))
+            results.append({
+                "state": state,
+                "speaker_group": group,
+                "mentions": count
+            })
+
+    df_states = (
+        pd.DataFrame(results)
+        .sort_values(["speaker_group", "mentions"], ascending=[True, False])
+        .reset_index(drop=True)
+    )
+
+    return df_states
+
 def normalize_name(name):
     """
     Normalize Mexican state names for matching.
@@ -572,3 +848,103 @@ def normalize_name(name):
         if unicodedata.category(c) != 'Mn'
     )
     return name.lower().replace(" de ignacio de la llave", "").replace(" de zaragoza", "").strip()
+
+def _predict_sentiment(text: str) -> tuple[str, float, dict]:
+    """
+    Return (label, score, probas_dict) using pysentimiento.
+    label in {'POS','NEU','NEG'}
+    score is mapped to {1,0,-1}
+    """
+    if not isinstance(text, str) or not text.strip():
+        return "NEU", 0.0, {"POS": 0.0, "NEU": 1.0, "NEG": 0.0}
+    pred = _analyzer_es.predict(text)
+    label = pred.output  # 'POS' | 'NEU' | 'NEG'
+    score = _LABEL_TO_SCORE[label]
+    return label, score, pred.probas  # dict like {'NEG': p1, 'NEU': p2, 'POS': p3}
+
+def compute_sentiment_for_date(
+    df: pd.DataFrame,
+    target_date: str,
+    *,
+    text_col: str = "text",
+    date_col: str = "date",
+    speaker_col: str = "speaker_group",
+    keep_columns: Optional[list[str]] = None,
+    after_first_journalist: bool = True
+) -> pd.DataFrame:
+    """
+    Filter a single conference (date == target_date), compute sentiment per intervention.
+
+    If after_first_journalist=True, only keeps interventions after the first journalist speaks.
+
+    Returns a tidy DataFrame with:
+      - date
+      - intervention_order (1..n)
+      - speaker_group (President/Official or Journalist)
+      - text
+      - sentiment_label (Positive / Neutral / Negative)
+      - sentiment_score (1 / 0 / -1)
+      - p_pos, p_neu, p_neg (model probabilities)
+    """
+    if _analyzer_es is None:
+        raise RuntimeError("Spanish sentiment analyzer not available. "
+                           "Install/verify pysentimiento, transformers, and torch.")
+
+    # 1) Filter that single conference
+    d = df.copy()
+    d[date_col] = pd.to_datetime(d[date_col], errors="coerce")
+    target_dt = pd.to_datetime(target_date)
+    conf = d.loc[d[date_col] == target_dt].copy()
+
+    if conf.empty:
+        return pd.DataFrame(columns=[
+            date_col, "intervention_order", speaker_col, text_col,
+            "sentiment_label", "sentiment_score", "p_pos", "p_neu", "p_neg", "speaker_group"
+        ])
+
+    # 2) Preserve original sequence
+    conf = conf.reset_index(drop=True)
+    conf["intervention_order"] = conf.index + 1
+
+    # 3) Speaker grouping
+    if "speaker_clean" not in conf.columns:
+        conf["speaker_clean"] = conf["speaker"].apply(clean_speaker)
+
+    conf["speaker_group"] = conf["speaker_clean"].apply(
+        lambda s: "Journalist" if s == "PERIODISTA/PREGUNTA" else "President/Official"
+    )
+
+    # 4) Keep only after first journalist if requested
+    if after_first_journalist:
+        first_journalist_idx = conf.index[conf["speaker_group"] == "Journalist"]
+        if len(first_journalist_idx) > 0:
+            start_idx = first_journalist_idx[0]
+            conf = conf.loc[start_idx:].reset_index(drop=True)
+            conf["intervention_order"] = conf.index + 1
+
+    # 5) Run sentiment analysis
+    labels, scores, p_pos, p_neu, p_neg = [], [], [], [], []
+    for txt in conf[text_col].fillna("").astype(str):
+        lab, sc, prob = _predict_sentiment(txt)
+        labels.append(_SPANISH_LABEL[lab])
+        scores.append(sc)
+        p_pos.append(prob.get("POS", 0.0))
+        p_neu.append(prob.get("NEU", 0.0))
+        p_neg.append(prob.get("NEG", 0.0))
+
+    conf["sentiment_label"] = labels
+    conf["sentiment_score"] = scores
+    conf["p_pos"] = p_pos
+    conf["p_neu"] = p_neu
+    conf["p_neg"] = p_neg
+
+    # 6) Select columns
+    base_cols = [
+        date_col, "intervention_order", speaker_col, text_col,
+        "sentiment_label", "sentiment_score", "p_pos", "p_neu", "p_neg", "speaker_group"
+    ]
+    if keep_columns:
+        extra = [c for c in keep_columns if c in conf.columns and c not in base_cols]
+        base_cols += extra
+
+    return conf[base_cols]
