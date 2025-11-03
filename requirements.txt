@@ -11,6 +11,9 @@ lxml>=4.9
 # Natural language processing (Spanish)
 nltk>=3.8
 gensim>=4.3
+pysentimiento
+transformers>=4.44
+torch
 
 # Machine learning / topic modeling
 scikit-learn>=1.4
