@@ -43,7 +43,7 @@ Across the full set of conferences, the President speaks about six times more th
 
 ## What They Talk About
 
-When the conferences themselves are broken down by topic, clear patterns emerge. Education, poverty, and gender equality are themes the President and her team mention most often, underscoring the administration’s focus on social policy and equality.
+When the conferences themselves are broken down by topic, clear patterns emerge. Education, poverty, and gender equality are themes the President and her team mention most often, underscoring the administration’s focus on social policy and equality[^2].
 
 Journalists, meanwhile, devote more of their limited speaking time to migration, a topic that has become increasingly central to Mexico’s domestic and international politics. It’s one of the few areas where their voices occasionally overtake the President’s, reflecting perhaps both public concern and the press’s watchdog instinct.
 
@@ -69,7 +69,7 @@ Journalists, by contrast, turn their attention north and toward the border. Thei
 
 ## Tracing the emotional pulse of the conferences
 
-What began as a space for transparency and democratization of information with the conferences has evolved into a barometer of Mexico's political climate. Beyond policy and politics, what emotions shape the dialogue between the President and the press? By examining sentiment, or the emotional tone of speech, each intervention in the conferences was categorized as positive, neutral, or negative. The result is a series of visualizations that make Mexico’s political dialogue visible as a living emotional landscape.
+What began as a space for transparency and democratization of information with the conferences has evolved into a barometer of Mexico's political climate. Beyond policy and politics, what emotions shape the dialogue between the President and the press? By examining sentiment, or the emotional tone of speech, each intervention in the conferences was categorized as positive, neutral, or negative[^3]. The result is a series of visualizations that make Mexico’s political dialogue visible as a living emotional landscape.
 
 Each chart begins after the first journalist’s question, focusing on the moments when actual conversation begins. Every dot represents a single spoken intervention: red for the President and her officials, green for journalists. The lines represent rolling averages that smooth the conversation’s trajectory over time.
 
@@ -112,3 +112,5 @@ The Mañaneras remind us that democracy is not measured by perfect balance, but 
 ---
 
 [^1]: Presidencia de la República (Mexico). Presidencia de la República. Gobierno de México. Accessed November 03, 2025. https://www.gob.mx/presidencia
+[^2]: Topic keywords were manually curated from frequent terms in the transcripts, government vocabulary, and major media outlets, including synonyms and institutional names to ensure broad semantic coverage.
+[^3]: Sentiment was classified using the pysentimiento library’s Spanish RoBERTa model, which assigns each intervention a positive*, neutral, or negative label based on contextual tone and polarity. Pérez, J. M., Rajngewerc, M., Giudici, J. C., Furman, D. A., Luque, F., Alonso Alemany, L., & Martínez, M. V. (2023). pysentimiento: A Python Toolkit for Opinion Mining and Social NLP Tasks. arXiv preprint arXiv:2106.09462.

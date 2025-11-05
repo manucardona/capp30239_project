@@ -1,22 +1,3 @@
-/* Used GPT5 to get the css style with the following prompt:  
-I’m creating a data storytelling article in Markdown that will be converted to HTML using Pandoc.
-The visualizations use Altair with a color palette based on:
-#9B2915 (President)
-#063A35 (Journalists)
-#BD8B9C (Officials)
-#1EA896 (Accents)
-#E9B872 (Highlights)
-Neutral gray tones (#4F4F4D, #545151)
-Please write a full style.css for the HTML page that:
-    -Uses Libre Franklin as the main font
-    - Keeps a maximum width of 900 px, centered with generous whitespace.
-    - Styles headings (h1, h2, h3) with bold weights and colored accents consistent with the visualization palette.
-    - Makes images rounded and stand out.
-    - Styles links and hover.
-    - Includes custom styling for footnotes and citations.
-I want it to look minimalist, journalistic (like the New York Times).
-*/
-
 /* === GLOBAL LAYOUT === */
 body {
   font-family: "Libre Franklin", "Helvetica Neue", Arial, sans-serif;
