@@ -68,3 +68,4 @@ uv pip install -r requirements.txt
 ```
 open output/final_story.html
 ```
+You can also just download the file in output/final_story.html and open it in any local browser.
