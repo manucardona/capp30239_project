@@ -1,0 +1,133 @@
+/* Used GPT5 to get the css style with the following prompt:  
+I’m creating a data storytelling article in Markdown that will be converted to HTML using Pandoc.
+The visualizations use Altair with a color palette based on:
+#9B2915 (President)
+#063A35 (Journalists)
+#BD8B9C (Officials)
+#1EA896 (Accents)
+#E9B872 (Highlights)
+Neutral gray tones (#4F4F4D, #545151)
+Please write a full style.css for the HTML page that:
+    -Uses Libre Franklin as the main font
+    - Keeps a maximum width of 900 px, centered with generous whitespace.
+    - Styles headings (h1, h2, h3) with bold weights and colored accents consistent with the visualization palette.
+    - Makes images rounded and stand out.
+    - Styles links and hover.
+    - Includes custom styling for footnotes and citations.
+I want it to look minimalist, journalistic (like the New York Times).
+*/
+
+/* === GLOBAL LAYOUT === */
+body {
+  font-family: "Libre Franklin", "Helvetica Neue", Arial, sans-serif;
+  color: #4F4F4D;
+  background-color: #FAFAFA;
+  max-width: 900px;
+  margin: 60px auto;
+  padding: 0 25px;
+  line-height: 1.7;
+  font-size: 17px;
+}
+
+/* === TITLE BLOCK === */
+h1.title {
+  font-family: "Libre Franklin", sans-serif;
+  color: #9B2915;
+  font-weight: 700;
+  text-align: center;
+  font-size: 2.6em;
+  margin-bottom: 0.2em;
+}
+h2.author, h3.date {
+  text-align: center;
+  font-weight: 400;
+  color: #063A35;
+  margin: 0;
+}
+/* Hide Pandoc's automatically generated title block */
+#title-block-header {
+  display: none;
+}
+
+/* === SECTION HEADINGS === */
+h2 {
+  font-family: "Libre Franklin", sans-serif;
+  font-weight: 700;
+  font-size: 1.6em;
+  color: #063A35;
+  border-left: 5px solid #9B2915;
+  padding-left: 12px;
+  margin-top: 2.5em;
+}
+h3 {
+  color: #063A35;
+  font-weight: 600;
+  margin-top: 2em;
+  font-size: 1.2em;
+}
+
+/* === LINKS === */
+a {
+  color: #1EA896;
+  text-decoration: none;
+}
+a:hover {
+  color: #9B2915;
+  text-decoration: underline;
+}
+
+/* === IMAGES & CAPTIONS === */
+img {
+  border-radius: 10px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+  display: block;
+  margin: 35px auto 5px auto;
+  max-width: 100%;
+}
+figcaption, em {
+  color: #545151;
+  font-style: italic;
+  text-align: center;
+  display: block;
+  margin-top: 5px;
+  font-size: 0.9em;
+}
+
+/* === QUOTES & DIVIDERS === */
+blockquote {
+  border-left: 5px solid #BD8B9C;
+  margin: 1.5em 0;
+  padding: 0.8em 1.5em;
+  background-color: #F6F4F3;
+  border-radius: 6px;
+  font-style: italic;
+}
+hr {
+  border: 0;
+  border-top: 2px solid #E9B872;
+  width: 70px;
+  margin: 50px auto;
+}
+
+/* Footnote styling */
+.footnotes {
+  font-size: 0.85rem;
+  color: #545151;
+  border-top: 1px solid #ccc;
+  margin-top: 2em;
+  padding-top: 1em;
+}
+
+.footnotes ol {
+  padding-left: 1.5em;
+}
+
+.footnotes li {
+  margin-bottom: 0.5em;
+}
+
+a.footnote-back {
+  text-decoration: none;
+  color: #9B2915; 
+}
+
